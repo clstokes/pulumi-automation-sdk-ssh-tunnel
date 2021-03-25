@@ -1,5 +1,4 @@
 import * as aws from "@pulumi/aws";
-import * as awsx from "@pulumi/awsx";
 import * as random from "@pulumi/random";
 import * as pulumi from "@pulumi/pulumi";
 
@@ -8,9 +7,20 @@ const stack = pulumi.getStack();
 const tags = { project, stack, Name: `${project}-${stack}` };
 const config = new pulumi.Config();
 
-const vpc = new awsx.ec2.Vpc("main", { tags });
-export const vpcId = vpc.id;
+/**
+ * Get details of default vpc to use for resources.
+ */
+const vpc = aws.ec2.getVpc({ default: true });
+const vpcId = vpc.then(it => it.id);
+const vpcCidrBlock = vpc.then(it => it.cidrBlock);
 
+const subnets = vpc.then(it => aws.ec2.getSubnetIds({ vpcId: it.id }));
+const allSubnetIds = subnets.then(it => it.ids);
+const firstSubnetId = subnets.then(it => it.ids[0]);
+
+/**
+ * Provision bastion resources.
+ */
 const amiId = aws.ec2.getAmi({
     owners: ["099720109477"], // Ubuntu
     mostRecent: true,
@@ -18,7 +28,7 @@ const amiId = aws.ec2.getAmi({
 }).then(it => it.id);
 
 const sshSg = new aws.ec2.SecurityGroup(`bastion`, {
-    vpcId: vpc.id,
+    vpcId: vpcId,
     ingress: [{ protocol: "tcp", fromPort: 22, toPort: 22, cidrBlocks: ["0.0.0.0/0"] }],
     egress: [{ protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] }],
     tags
@@ -29,20 +39,25 @@ const sshKey = new aws.ec2.KeyPair("bastion", { publicKey: config.require("publi
 const bastion = new aws.ec2.Instance("bastion", {
     instanceType: aws.ec2.InstanceTypes.T3_Small,
     ami: amiId,
-    subnetId: pulumi.output(vpc.publicSubnets)[0].id,
+    subnetId: firstSubnetId,
     vpcSecurityGroupIds: [sshSg.id],
     associatePublicIpAddress: true,
     keyName: sshKey.keyName,
     tags,
 });
 
-const postgresSg = new aws.ec2.SecurityGroup("db", {
+export const bastionHost = bastion.publicIp;
+
+/**
+ * Provision database resources.
+ */
+ const postgresSg = new aws.ec2.SecurityGroup("db", {
     vpcId,
-    ingress: [{ protocol: "tcp", fromPort: 5432, toPort: 5432, cidrBlocks: [vpc.vpc.cidrBlock] }],
-    egress: [{ protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: [vpc.vpc.cidrBlock] }],
+    ingress: [{ protocol: "tcp", fromPort: 5432, toPort: 5432, cidrBlocks: [vpcCidrBlock] }],
+    egress: [{ protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: [vpcCidrBlock] }],
 });
 const dbSubnets = new aws.rds.SubnetGroup("db", {
-    subnetIds: vpc.privateSubnetIds,
+    subnetIds: allSubnetIds,
     tags,
 });
 const password = new random.RandomPassword("db", {
@@ -67,7 +82,6 @@ const db = new aws.rds.Instance("db", {
     tags,
 });
 
-export const bastionHost = bastion.publicIp;
 export const dbHost = db.address;
 export const dbUsername = db.username;
 export const dbPassword = db.password;
