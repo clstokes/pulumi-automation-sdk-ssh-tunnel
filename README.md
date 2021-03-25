@@ -27,53 +27,105 @@ npm run pulumi \
 
 ```
 %  npm run pulumi up dev ~/.ssh/key.pub 
+
 > pulumi-automation-sdk-ssh-tunnel@0.0.1 pulumi
 > ./node_modules/ts-node/dist/bin.js pulumi.ts "up" "dev" "/Users/clstokes/.ssh/key.pub"
+
 Running [up] on stack [dev]
+################################################################################
+#
+# Installing dependencies for [./vpc,./database]... 
+#
+################################################################################
 Updating (dev)
 
-View Live: https://app.pulumi.com/clstokes/vpc/dev/updates/65
+
+View Live: https://app.pulumi.com/clstokes/vpc/dev/updates/83
+
+
 
 
  +  pulumi:pulumi:Stack vpc-dev creating 
- +  awsx:x:ec2:Vpc main creating 
- +  aws:ec2:KeyPair main creating 
- ...
- +  aws:ec2:Route main-private-0-nat-0 created 
- +  aws:rds:Instance postgresdb created 
+
+ +  aws:ec2:KeyPair bastion creating 
+
+ +  random:index:RandomPassword db creating 
+
+ +  random:index:RandomPassword db created 
+
+ +  aws:ec2:KeyPair bastion created 
+
+ +  aws:ec2:SecurityGroup bastion creating 
+
+ +  aws:ec2:SecurityGroup db creating 
+
+ +  aws:rds:SubnetGroup db creating 
+
+ +  aws:rds:SubnetGroup db created 
+
+ +  aws:ec2:SecurityGroup db created 
+
+ +  aws:ec2:SecurityGroup bastion created 
+
+ +  aws:rds:Instance db creating 
+
+ +  aws:ec2:Instance bastion creating 
+
+ +  aws:ec2:Instance bastion created 
+
+ +  aws:rds:Instance db created 
+
  +  pulumi:pulumi:Stack vpc-dev created 
  
+
 Outputs:
-    bastionHost: "3.220.232.157"
-    dbHost     : "postgresdb987bfbc.c3vf5g3d8zs9.us-east-1.rds.amazonaws.com"
+    bastionHost: "3.239.113.92"
+    dbHost     : "db7c71462.c3vf5g3d8zs9.us-east-1.rds.amazonaws.com"
     dbPassword : "[secret]"
     dbUsername : "admin2021"
-    vpcId      : "vpc-06e9ccae6be527e0d"
+
+
 Resources:
-    + 38 created
-Duration: 3m51s
+    + 8 created
+
+Duration: 3m28s
+
 
 ################################################################################
 #
-# Establishing tunnel through [3.220.232.157] to [postgresdb987bfbc.c3vf5g3d8zs9.us-east-1.rds.amazonaws.com] on port [5432]...
+# Establishing tunnel through [3.239.113.92] to [db7c71462.c3vf5g3d8zs9.us-east-1.rds.amazonaws.com] on port [5432]...
 #
 ################################################################################
 Updating (dev)
 
-View Live: https://app.pulumi.com/clstokes/database/dev/updates/65
+
+View Live: https://app.pulumi.com/clstokes/database/dev/updates/80
+
+
 
 
  +  pulumi:pulumi:Stack database-dev creating 
+
  +  postgresql:index:Database main3 creating 
+
+ +  postgresql:index:Database main2 creating 
+
  +  postgresql:index:Database main1 creating 
- ...
- +  postgresql:index:Database main1 created 
+
+ +  postgresql:index:Database main3 created 
+
  +  postgresql:index:Database main2 created 
+
+ +  postgresql:index:Database main1 created 
+
  +  pulumi:pulumi:Stack database-dev created 
  
+
 Resources:
     + 4 created
-Duration: 13s
+
+Duration: 12s
+
 
 ################################################################################
 #
