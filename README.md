@@ -6,6 +6,7 @@ This project demonstrates how you can use the [Pulumi Automation SDK](https://ww
 
 - You will need the [Pulumi CLI](https://www.pulumi.com/docs/get-started/install/) installed.
 - This particular project uses TypeScript so you will need [Node.js](https://nodejs.org/en/download/) installed. This same automation application could be implemented in any of other languages that Pulumi supports.
+- For execution, and the SSH tunnel to work correctly, the current implementation requires that the ssh key is already established with `ssh-agent`. The code could be modified to take the ssh private key as an input.
 
 ## Usage
 
