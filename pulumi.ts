@@ -12,10 +12,10 @@ const publicKeyFilePath = process.argv[4];
 /**
  * Print a message to the console with a "banner" outline.
  */
-function banner(message: string) {
+function banner(...message: string[]) {
     console.log(`################################################################################`);
     console.log(`#`);
-    console.log(`# ${message}`);
+    message.forEach(it => console.log(`# ${it}`));
     console.log(`#`);
     console.log(`################################################################################`);
 }
@@ -47,6 +47,13 @@ function stopSshTunnel(tunnel: child_process.ChildProcessWithoutNullStreams | un
     }
     banner(`Stopping tunnel...`);
     tunnel.kill();
+}
+
+async function preview() {
+    banner("Preview is not currently implemented, but could be easily added. "
+        , "In its current form, a `preview` would fail on the first `up` because "
+        , "the bastion host would not be available.");
+    process.exit(1);
 }
 
 /**
@@ -103,7 +110,7 @@ async function up(stackName: string, publicKey: string) {
 async function refresh(stackName: string) {
     let tunnel: child_process.ChildProcessWithoutNullStreams | undefined;
     try {
-        const vpcStack = await auto.LocalWorkspace.createOrSelectStack({ workDir: vpcWorkDir, stackName });
+        const vpcStack = await auto.LocalWorkspace.selectStack({ workDir: vpcWorkDir, stackName });
         const vpcOutputs = await vpcStack.outputs();
 
         /**
@@ -114,7 +121,7 @@ async function refresh(stackName: string) {
         /**
          * Refresh database resources.
          */
-        const dbStack = await auto.LocalWorkspace.createOrSelectStack({ workDir: dbWorkDir, stackName });
+        const dbStack = await auto.LocalWorkspace.selectStack({ workDir: dbWorkDir, stackName });
         const dbResult = await dbStack.refresh({ onOutput: console.log });
 
         /**
@@ -140,7 +147,7 @@ async function refresh(stackName: string) {
 async function destroy(stackName: string) {
     let tunnel: child_process.ChildProcessWithoutNullStreams | undefined;
     try {
-        const vpcStack = await auto.LocalWorkspace.createOrSelectStack({ workDir: vpcWorkDir, stackName });
+        const vpcStack = await auto.LocalWorkspace.selectStack({ workDir: vpcWorkDir, stackName });
         const vpcOutputs = await vpcStack.outputs();
 
         /**
@@ -151,7 +158,7 @@ async function destroy(stackName: string) {
         /**
          * Destroy database resources.
          */
-        const dbStack = await auto.LocalWorkspace.createOrSelectStack({ workDir: dbWorkDir, stackName });
+        const dbStack = await auto.LocalWorkspace.selectStack({ workDir: dbWorkDir, stackName });
         const dbResult = await dbStack.destroy({ onOutput: console.log });
 
         /**
@@ -176,6 +183,9 @@ if (command === undefined || stackName === undefined) {
     process.exit(1);
 }
 
+if (command === "preview") {
+    preview();
+}
 if (command === "up") {
     const publicKeyFile = fs.readFileSync(publicKeyFilePath).toString();
     console.log(`Running [${command}] on stack [${stackName}]`);
@@ -190,6 +200,6 @@ else if (command === "refresh") {
     refresh(stackName);
 }
 else {
-    console.log(`Unsupported command specified [${command}]`);
+    console.log(`Unsupported command [${command}]. Exiting...`);
     process.exit(1);
 }
