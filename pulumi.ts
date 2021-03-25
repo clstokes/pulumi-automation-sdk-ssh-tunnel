@@ -26,11 +26,15 @@ function banner(message: string) {
  * Requires that the ssh key is already trusted with `ssh-agent`.
  * Could be modified to take the ssh private key as an input.
  */
-function startSshTunnel(dbHost: string, bastionHost: string) {
+function startSshTunnel(bastionHost: string, targetHost: string) {
+    if (bastionHost === undefined) {
+        banner(`Bastion host is undefined. Skipping tunnel creation...`);
+        return;
+    }
     const port = "5432";
-    banner(`Establishing tunnel through [${bastionHost}] to [${dbHost}] on port [${port}]...`);
+    banner(`Establishing tunnel through [${bastionHost}] to [${targetHost}] on port [${port}]...`);
     return child_process.spawn(
-        `/usr/bin/ssh`, [`-L`, `${port}:${dbHost}:${port}`, `ubuntu@${bastionHost}`]
+        `/usr/bin/ssh`, [`-L`, `${port}:${targetHost}:${port}`, `ubuntu@${bastionHost}`]
     );
 }
 
@@ -68,7 +72,7 @@ async function up(stackName: string, publicKey: string) {
         /**
          * Establish connection to private resources.
          */
-        tunnel = startSshTunnel(vpcOutputs.dbHost.value, vpcOutputs.bastionHost.value);
+        tunnel = startSshTunnel(vpcOutputs.bastionHost?.value, vpcOutputs.dbHost?.value);
 
         /**
          * Provision database resources - e.g. PostgreSQL databases.
@@ -105,7 +109,7 @@ async function refresh(stackName: string) {
         /**
          * Establish connection to private resources.
          */
-        tunnel = startSshTunnel(vpcOutputs.dbHost.value, vpcOutputs.bastionHost.value);
+        tunnel = startSshTunnel(vpcOutputs.bastionHost?.value, vpcOutputs.dbHost?.value);
 
         /**
          * Refresh database resources.
@@ -142,7 +146,7 @@ async function destroy(stackName: string) {
         /**
          * Establish connection to private resources.
          */
-        tunnel = startSshTunnel(vpcOutputs.dbHost.value, vpcOutputs.bastionHost.value);
+        tunnel = startSshTunnel(vpcOutputs.bastionHost?.value, vpcOutputs.dbHost?.value);
 
         /**
          * Destroy database resources.
