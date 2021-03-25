@@ -20,6 +20,17 @@ function banner(...message: string[]) {
     console.log(`################################################################################`);
 }
 
+function installDependencies(workDirs: string[]) {
+    banner(`Installing dependencies for [${workDirs}]... `);
+    for (let i = 0; i < workDirs.length; i++) {
+        const path = workDirs[i];
+        if (fs.existsSync(`${path}/node_modules`)) {
+            continue;
+        }
+        child_process.execSync("npm install", { cwd: path });
+    }
+};
+
 /**
  * Starts an SSH tunnel.
  * 
@@ -65,6 +76,8 @@ async function preview() {
 async function up(stackName: string, publicKey: string) {
     let tunnel: child_process.ChildProcessWithoutNullStreams | undefined;
     try {
+        installDependencies([vpcWorkDir, dbWorkDir]);
+
         /**
          * Provision VPC, Bastion, and RDS.
          */
@@ -110,6 +123,8 @@ async function up(stackName: string, publicKey: string) {
 async function refresh(stackName: string) {
     let tunnel: child_process.ChildProcessWithoutNullStreams | undefined;
     try {
+        installDependencies([vpcWorkDir, dbWorkDir]);
+
         const vpcStack = await auto.LocalWorkspace.selectStack({ workDir: vpcWorkDir, stackName });
         const vpcOutputs = await vpcStack.outputs();
 
@@ -147,6 +162,8 @@ async function refresh(stackName: string) {
 async function destroy(stackName: string) {
     let tunnel: child_process.ChildProcessWithoutNullStreams | undefined;
     try {
+        installDependencies([vpcWorkDir, dbWorkDir]);
+
         const vpcStack = await auto.LocalWorkspace.selectStack({ workDir: vpcWorkDir, stackName });
         const vpcOutputs = await vpcStack.outputs();
 
